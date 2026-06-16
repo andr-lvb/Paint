@@ -1,0 +1,13 @@
+
+CELL_SIZE_BASE = 10
+CELL_SIZE = 20
+
+WIDTH = 80 * CELL_SIZE_BASE // CELL_SIZE
+HEIGHT = 80  * CELL_SIZE_BASE // CELL_SIZE
+
+BLACK = (0, 0, 0)
+
+PALETTE_COLORS = [
+    (200, 200, 200), (0, 0, 0), (255, 255, 255), (0, 255, 0),
+    (255, 0, 0), (0, 0, 255), (255, 0, 255), (255, 192, 203)
+]
