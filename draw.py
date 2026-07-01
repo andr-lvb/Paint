@@ -1,16 +1,18 @@
 import math
 
-import const as CN
 
-import math
+
 
 def blend_pixel(surface, x, y, color, intensity):
     if 0 <= x < surface.width and 0 <= y < surface.height:
-        existing = surface.set_pixel(x, y)
+        existing = surface.get_pixel(x, y)
         r = int(existing[0] * (1 - intensity) + color[0] * intensity)
         g = int(existing[1] * (1 - intensity) + color[1] * intensity)
         b = int(existing[2] * (1 - intensity) + color[2] * intensity)
         surface.set_pixel(x, y, (r, g, b))
+
+
+
 
 def draw_line_dda(surface, p1, p2, color, thickness=1, antialiasing=True):
     x0, y0 = p1.conv()
