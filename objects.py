@@ -156,6 +156,18 @@ class Button:
 
 
 
+class Line:
+    def __init__(self, p1, p2, color):
+        self.p1 = p1
+        self.p2 = p2
+        self.color = color
+
+    def __str__(self):
+        return f'({self.p1}, {self.p2}, {self.color})'
+
+
+
+
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -175,6 +187,9 @@ class Point2D(Point):
 
     def move_by_vector(self, vector):
         return Point2D(self.x + vector.dx, self.y - vector.dy)
+
+    def __str__(self):
+        return f'({self.x}, {self.y})'
 
 
 
@@ -208,6 +223,22 @@ class Polygon2D(Shape2D):
             p1 = self.points[i]
             p2 = self.points[(i + 1) % len(self.points)]
             draw_line_dda(surface, p1, p2, self.color, antialiasing=False)
+
+    @classmethod
+    def fill(cls, surface, p, color):
+        old_color = surface.get_pixel(p.x, p.y)
+        d = [(1,0), (0,1), (0,-1), (1,-1), (1, 1), (-1, 0), (-1, -1), (-1, 1)]
+        q = [p]
+        while q:
+            print(len(q))
+            surface.set_pixel(q[0].x, q[0].y, color)
+            for dx,dy in d:
+                x, y = q[0].x + dx, q[0].y + dy
+                if old_color == surface.get_pixel(x, y):
+                    q.append(Point2D(x, y))
+            del q[0]
+
+
 
 
 
@@ -285,8 +316,8 @@ class Vector2D(Vector):
         self.dy = dy
 
     @classmethod
-    def from_angle(cls, len, digree):
-        r = math.radians(digree)
+    def from_angle(cls, len, degree):
+        r = math.radians(degree)
         dx = len * math.cos(r)
         dy = len * math.sin(r)
         return cls(dx, dy)
@@ -308,5 +339,64 @@ class Vector2D(Vector):
     def __sub__(self, other):
         return Vector2D(self.dx - other.dx, self.dy - other.dy)
 
+    def __mul__(self, other):
+        return Vector2D(self.dx * other, self.dy * other)
 
 
+
+
+class Turtle:
+    def __init__(self, x, y, degree, draw=False):
+        self.p = Point2D(x, y)
+        self.x = self.p.x
+        self.y = self.p.y
+        self.angle = math.radians(degree)
+        self.vector = Vector2D.from_angle(1, degree)
+        self.draw = draw
+        self.commands = []
+        self._update_vector()
+
+    def _update_vector(self):
+        self.vector = Vector2D(math.cos(self.angle), math.sin(self.angle))
+
+    def parse(self, s):
+        s = s.split()
+        for a in s:
+            a = a.split('=')
+            self.commands.append((a[0], int(a[1])))
+
+    def forward(self, x):
+        v = self.vector * x
+        self.p = self.p.move_by_vector(v)
+
+    def backward(self, x):
+        v = self.vector * (-x)
+        self.p = self.p.move_by_vector(v)
+
+    def left(self, angle):
+        radians = math.radians(self.angle)
+        self.angle -= radians
+        self._update_vector()
+
+    def right(self, angle):
+        radians = math.radians(angle)
+        self.angle -= radians
+        self._update_vector()
+
+    def run(self):
+        self.x = self.p.x
+        self.y = self.p.y
+        for cmd, val in self.commands:
+            if cmd == 'forward':
+                self.forward(val)
+            elif cmd == 'backward':
+                self.backward(val)
+            elif cmd == 'left':
+                self.left(val)
+            elif cmd == 'right':
+                self.right(val)
+
+    def Draw(self, canvas):
+
+        canvas.set_pixel(round(self.x), round(self.y))
+        canvas.set_pixel(round(self.p.x), round(self.p.y), cn.RED)
