@@ -1,7 +1,13 @@
+from Geometry import Circle, Point2D, Line, Polygon2D
+from Surfaces import Canvas, Info_Panel
+from Turtle import Vector2D, Turtle
+from Toolbar import Palette, Button
+from Geometry3D import Cube, Piramid3
+from Draw import draw_line_dda
+
+import Constant as Cn
 import pygame as pg
-import const as cn
-from objects import Canvas, Palette, Info_Panel, Circle, Button, Vector2D, Point2D, Line, Turtle, Polygon2D
-from draw import draw_line_dda
+
 
 # инициализируем pygame
 pg.init()
@@ -10,19 +16,20 @@ pg.init()
 screen = pg.display.set_mode((800, 880))
 
 # создаем экран canvas
-canvas = Canvas(screen, cn.WIDTH, cn.HEIGHT)
+canvas = Canvas(screen, Cn.WIDTH, Cn.HEIGHT)
 
 # создаем экран info panel
 info_panel = Info_Panel(screen, 800, 80)
 
 # создаем меню palette
-palette = Palette(info_panel, cn.PALETTE_COLORS, 800, 80)
+palette = Palette(info_panel, Cn.PALETTE_COLORS, 800, 80)
 
 # создаем конпку ластика
-eraser_button = Button(240, 10, 60, 60, cn.GRAY)
+eraser_button = Button(240, 10, 60, 60, Cn.GRAY)
 
 # создаем конпку для измнения линии
-edit_button = Button(350, 10, 60, 60, cn.BLUE)
+edit_button = Button(350, 10, 60, 60, Cn.BLUE)
+
 
 # устанавливаем название для игры
 pg.display.set_caption('Paint')
@@ -32,6 +39,7 @@ clock = pg.time.Clock()
 
 running = True
 edit_mode = False
+cube_mode = False
 eraser_mode = False
 dragging_end = False
 anchor_point = None
@@ -42,7 +50,7 @@ fill = False
 selected_end = 0
 point = 0
 selected_line_index = -1
-eraser_radius = 2
+eraser_radius = 20
 count = 0
 
 list_point = []
@@ -50,10 +58,9 @@ lines = []
 
 turtle1 = Turtle(50,20,0)
 # s = 'forward=10\nbackward=4\nleft=60\nright=30'
-file = open('turtl')
+file = open('Turtle.test')
 s = ''.join(file.readlines())
 turtle1.parse(s)
-
 
 
 def create_eraser_cursor(radius, cell_size):
@@ -63,6 +70,7 @@ def create_eraser_cursor(radius, cell_size):
     pg.draw.circle(surface, (255, 0, 0, 100), (size//2, size//2), radius*cell_size, 1)
     pg.draw.circle(surface, (255, 0, 0, 30), (size//2, size//2), radius*cell_size)
     return pg.cursors.Cursor((size//2, size//2), surface)
+
 
 while running:
     for event in pg.event.get():
@@ -84,7 +92,7 @@ while running:
                     edit_mode = False
 
                     if eraser_mode:
-                        pg.mouse.set_cursor(create_eraser_cursor(eraser_radius, cn.CELL_SIZE))
+                        pg.mouse.set_cursor(create_eraser_cursor(eraser_radius, Cn.CELL_SIZE))
 
                     else:
                         pg.mouse.set_cursor(pg.cursors.arrow)
@@ -105,7 +113,12 @@ while running:
                         selected_line_index = -1
 
             else:
-
+                if cube_mode:
+                    p = canvas.get_coords()
+                    # cube = Cube(canvas, p, 50, 40, palette.current_color)
+                    # cube.draw()
+                    piramid = Piramid3(canvas, p, 20, 40, palette.current_color)
+                    piramid.draw()
                 if event.button == 1 and eraser_mode:
                     p = canvas.get_coords()
                     cx, cy = p.conv()
@@ -115,7 +128,6 @@ while running:
 
                             if dx * dx + dy * dy <= eraser_radius * eraser_radius:
                                 canvas.set_pixel(cx + dx, cy + dy, canvas.bg_color)
-
 
                 elif edit_mode and event.button == 1:
                     p = canvas.get_coords()
@@ -137,7 +149,6 @@ while running:
                                 anchor_point = line.p2 if selected_end == 0 else line.p1
                                 previous_drag_point = line.p1 if selected_end == 0 else line.p2
                                 dragging_end = True
-
 
                 elif not edit_mode and not eraser_mode:
                     p = canvas.get_coords()
@@ -168,7 +179,6 @@ while running:
                                 lines.append(Line(list_point[0], list_point[1], palette.current_color))
                                 list_point = []
 
-
         elif event.type == pg.MOUSEMOTION and eraser_mode:
             if event.buttons[0] == 1:
                 p = canvas.get_coords()
@@ -178,13 +188,11 @@ while running:
                         if dx * dx + dy * dy <= eraser_radius * eraser_radius:
                             canvas.set_pixel(cx + dx, cy + dy, canvas.bg_color)
 
-
         elif event.type == pg.MOUSEMOTION and edit_mode and dragging_end and event.buttons[0] == 1:
             current_point = canvas.get_coords()
             draw_line_dda(canvas, anchor_point, previous_drag_point, canvas.bg_color, antialiasing=False)
             draw_line_dda(canvas, anchor_point, current_point, lines[selected_line_index].color, antialiasing=False)
             previous_drag_point = current_point
-
 
         elif event.type == pg.MOUSEBUTTONUP:
             if event.button == 1 and dragging_end:
@@ -213,18 +221,18 @@ while running:
 
             if event.key == pg.K_y:
                 if count == 0:
-                    turtle1.Draw(canvas)
+                    turtle1.drawing(canvas)
                     turtle1.run()
                     count += 1
                 if count == 1:
-                    turtle1.Draw(canvas)
+                    turtle1.drawing(canvas)
                     count = 0
 
             if event.key == pg.K_f:
                 fill = True
 
-
-
+            if event.key == pg.K_3:
+                cube_mode = not cube_mode
 
 
 
@@ -236,10 +244,12 @@ while running:
     edit_button.draw(info_panel)
     eraser_button.draw(info_panel)
 
+
     if edit_mode and dragging_end and selected_line_index != -1:
-        sx = previous_drag_point.x * cn.CELL_SIZE + cn.CELL_SIZE // 2
-        sy = previous_drag_point.y * cn.CELL_SIZE + 80 + cn.CELL_SIZE // 2
+        sx = previous_drag_point.x * Cn.CELL_SIZE + Cn.CELL_SIZE // 2
+        sy = previous_drag_point.y * Cn.CELL_SIZE + 80 + Cn.CELL_SIZE // 2
         pg.draw.circle(screen, (255, 0, 0), (sx, sy), 6, 2)
+
 
     # обновление экрана (что бы отображалось нарисованное)
     pg.display.flip()
